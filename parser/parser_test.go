@@ -258,6 +258,22 @@ func TestParserv3(t *testing.T) {
 		}
 	})
 
+	t.Run("DecodePacket/Error", func(t *testing.T) {
+		pack, err := p.DecodePacket(types.NewStringBufferString("x"))
+
+		if err == nil {
+			t.Fatal("DecodePacket error must be not nil")
+		}
+
+		if pack.Type != packet.ERROR {
+			t.Fatalf(`DecodePacket *Packet.Type value not as expected: %q, want match for %q`, pack.Type, packet.ERROR)
+		}
+
+		if pack.Data == nil {
+			t.Fatal(`DecodePacket *Packet.Data value must not be nil`)
+		}
+	})
+
 	t.Run("EncodePayload/Base64", func(t *testing.T) {
 		data, err := p.EncodePayload(
 			[]*packet.Packet{
@@ -308,7 +324,14 @@ func TestParserv3(t *testing.T) {
 	})
 
 	t.Run("DecodePayload/Base64", func(t *testing.T) {
-		packs := p.DecodePayload(types.NewStringBufferString("6:b0QUJD26:1test测试中文和表情字符❤️🧡💛🧓🏾💟"))
+		packs := []*packet.Packet{}
+		err := p.DecodePayload(types.NewStringBufferString("6:b0QUJD26:1test测试中文和表情字符❤️🧡💛🧓🏾💟x"), func(pack *packet.Packet) {
+			packs = append(packs, pack)
+		})
+
+		if err == nil {
+			t.Fatal("DecodePayload error must be not nil.")
+		}
 
 		if l := len(packs); l != 2 {
 			t.Fatalf(`*len(packs) = %d, want match for %d`, l, 2)
@@ -321,7 +344,7 @@ func TestParserv3(t *testing.T) {
 			}
 
 			if packs[0].Data == nil {
-				t.Fatal(`DecodePacket packs[0]..Data value must not be nil`)
+				t.Fatal(`DecodePacket packs[0].Data value must not be nil`)
 			}
 
 			if c, ok := packs[0].Data.(io.Closer); ok {
@@ -368,7 +391,10 @@ func TestParserv3(t *testing.T) {
 	})
 
 	t.Run("DecodePayload", func(t *testing.T) {
-		packs := p.DecodePayload(types.NewBytesBuffer([]byte{1, 4, 255, 0, 65, 66, 67, 0, 5, 8, 255, 49, 116, 101, 115, 116, 195, 131, 194, 166, 195, 130, 194, 181, 195, 130, 194, 139, 195, 131, 194, 168, 195, 130, 194, 175, 195, 130, 194, 149, 195, 131, 194, 164, 195, 130, 194, 184, 195, 130, 194, 173, 195, 131, 194, 166, 195, 130, 194, 150, 195, 130, 194, 135, 195, 131, 194, 165, 195, 130, 194, 146, 195, 130, 194, 140, 195, 131, 194, 168, 195, 130, 194, 161, 195, 130, 194, 168, 195, 131, 194, 166, 195, 130, 194, 131, 195, 130, 194, 133, 195, 131, 194, 165, 195, 130, 194, 173, 195, 130, 194, 151, 195, 131, 194, 167, 195, 130, 194, 172, 195, 130, 194, 166, 195, 131, 194, 162, 195, 130, 194, 157, 195, 130, 194, 164, 195, 131, 194, 175, 195, 130, 194, 184, 195, 130, 194, 143, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 167, 195, 130, 194, 161, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 146, 195, 130, 194, 155, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 167, 195, 130, 194, 147, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 143, 195, 130, 194, 190, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 146, 195, 130, 194, 159}))
+		packs := []*packet.Packet{}
+		p.DecodePayload(types.NewBytesBuffer([]byte{1, 4, 255, 0, 65, 66, 67, 0, 5, 8, 255, 49, 116, 101, 115, 116, 195, 131, 194, 166, 195, 130, 194, 181, 195, 130, 194, 139, 195, 131, 194, 168, 195, 130, 194, 175, 195, 130, 194, 149, 195, 131, 194, 164, 195, 130, 194, 184, 195, 130, 194, 173, 195, 131, 194, 166, 195, 130, 194, 150, 195, 130, 194, 135, 195, 131, 194, 165, 195, 130, 194, 146, 195, 130, 194, 140, 195, 131, 194, 168, 195, 130, 194, 161, 195, 130, 194, 168, 195, 131, 194, 166, 195, 130, 194, 131, 195, 130, 194, 133, 195, 131, 194, 165, 195, 130, 194, 173, 195, 130, 194, 151, 195, 131, 194, 167, 195, 130, 194, 172, 195, 130, 194, 166, 195, 131, 194, 162, 195, 130, 194, 157, 195, 130, 194, 164, 195, 131, 194, 175, 195, 130, 194, 184, 195, 130, 194, 143, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 167, 195, 130, 194, 161, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 146, 195, 130, 194, 155, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 167, 195, 130, 194, 147, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 143, 195, 130, 194, 190, 195, 131, 194, 176, 195, 130, 194, 159, 195, 130, 194, 146, 195, 130, 194, 159}), func(pack *packet.Packet) {
+			packs = append(packs, pack)
+		})
 
 		if l := len(packs); l != 2 {
 			t.Fatalf(`*len(packs) = %d, want match for %d`, l, 2)
@@ -604,6 +630,22 @@ func TestParserv4(t *testing.T) {
 		}
 	})
 
+	t.Run("DecodePacket/Error", func(t *testing.T) {
+		pack, err := p.DecodePacket(types.NewStringBufferString("x"))
+
+		if err == nil {
+			t.Fatal("DecodePacket error must be not nil")
+		}
+
+		if pack.Type != packet.ERROR {
+			t.Fatalf(`DecodePacket *Packet.Type value not as expected: %q, want match for %q`, pack.Type, packet.ERROR)
+		}
+
+		if pack.Data == nil {
+			t.Fatal(`DecodePacket *Packet.Data value must not be nil`)
+		}
+	})
+
 	t.Run("EncodePayload", func(t *testing.T) {
 		data, err := p.EncodePayload(
 			[]*packet.Packet{
@@ -630,7 +672,10 @@ func TestParserv4(t *testing.T) {
 	})
 
 	t.Run("DecodePayload/Base64", func(t *testing.T) {
-		packs := p.DecodePayload(types.NewStringBufferString("bQUJD\x1e1test测试中文和表情字符❤️🧡💛🧓🏾💟"))
+		packs := []*packet.Packet{}
+		p.DecodePayload(types.NewStringBufferString("bQUJD\x1e1test测试中文和表情字符❤️🧡💛🧓🏾💟"), func(pack *packet.Packet) {
+			packs = append(packs, pack)
+		})
 
 		if l := len(packs); l != 2 {
 			t.Fatalf(`*len(packs) = %d, want match for %d`, l, 2)
@@ -690,7 +735,10 @@ func TestParserv4(t *testing.T) {
 	})
 
 	t.Run("DecodePayload", func(t *testing.T) {
-		packs := p.DecodePayload(types.NewBytesBuffer([]byte{98, 81, 85, 74, 68, 30, 49, 116, 101, 115, 116, 230, 181, 139, 232, 175, 149, 228, 184, 173, 230, 150, 135, 229, 146, 140, 232, 161, 168, 230, 131, 133, 229, 173, 151, 231, 172, 166, 226, 157, 164, 239, 184, 143, 240, 159, 167, 161, 240, 159, 146, 155, 240, 159, 167, 147, 240, 159, 143, 190, 240, 159, 146, 159}))
+		packs := []*packet.Packet{}
+		p.DecodePayload(types.NewBytesBuffer([]byte{98, 81, 85, 74, 68, 30, 49, 116, 101, 115, 116, 230, 181, 139, 232, 175, 149, 228, 184, 173, 230, 150, 135, 229, 146, 140, 232, 161, 168, 230, 131, 133, 229, 173, 151, 231, 172, 166, 226, 157, 164, 239, 184, 143, 240, 159, 167, 161, 240, 159, 146, 155, 240, 159, 167, 147, 240, 159, 143, 190, 240, 159, 146, 159}), func(pack *packet.Packet) {
+			packs = append(packs, pack)
+		})
 
 		if l := len(packs); l != 2 {
 			t.Fatalf(`*len(packs) = %d, want match for %d`, l, 2)

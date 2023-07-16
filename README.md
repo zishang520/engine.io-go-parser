@@ -68,6 +68,7 @@ func main() {
       decoded from their base64 representation.
     - **Parameters**
       - `types.BufferInterface`: the payload
+      - `func(*packet.Packet)`: The decoded packet data
 
 ## Tests
 

@@ -288,22 +288,22 @@ func (p *parserv3) encodePayloadAsBinary(packets []*packet.Packet) (types.Buffer
 
 // Decodes data when a payload is maybe expected. Possible binary contents are
 // decoded from their base64 representation
-func (p *parserv3) DecodePayload(data types.BufferInterface) (packets []*packet.Packet) {
+func (p *parserv3) DecodePayload(data types.BufferInterface, callback func(*packet.Packet)) error {
 	switch v := data.(type) {
 	case *types.StringBuffer:
 		PACKETLEN := 0
 		for v.Len() > 0 {
 			length, err := v.ReadString(':')
 			if err != nil {
-				return packets
+				return err
 			}
 			_l := len(length)
 			if _l < 1 {
-				return packets
+				return errors.New("invalid data length")
 			}
 			packetLen, err := strconv.ParseInt(length[:_l-1], 10, 0)
 			if err != nil {
-				return packets
+				return err
 			}
 
 			PACKETLEN = int(packetLen)
@@ -311,47 +311,43 @@ func (p *parserv3) DecodePayload(data types.BufferInterface) (packets []*packet.
 			for i := 0; i < PACKETLEN; {
 				r, _, e := v.ReadRune()
 				if e != nil {
-					return packets
+					return e
 				}
 				i += utils.Utf16Len(r)
 				if _, err := msg.WriteRune(r); err != nil {
-					return packets
+					return err
 				}
 			}
 
 			if msg.Len() > 0 {
-				packet, err := p.DecodePacket(msg, false)
-				if err != nil {
-					// parser error in individual packet - ignoring payload
-					return packets
-				}
-				packets = append(packets, packet)
+				packet, _ := p.DecodePacket(msg, false)
+				callback(packet)
 			}
 		}
-		return packets
+		return nil
 	}
-	return p.decodePayloadAsBinary(data)
+	return p.decodePayloadAsBinary(data, callback)
 }
 
 // Decodes data when a payload is maybe expected. Strings are decoded by
 // interpreting each byte as a key code for entries marked to start with 0. See
 // description of encodePayloadAsBinary
-func (p *parserv3) decodePayloadAsBinary(bufferTail types.BufferInterface) (packets []*packet.Packet) {
+func (p *parserv3) decodePayloadAsBinary(bufferTail types.BufferInterface, callback func(*packet.Packet)) error {
 	PACKETLEN := 0
 	for bufferTail.Len() > 0 {
 		startByte, err := bufferTail.ReadByte()
 		if err != nil {
 			// parser error in individual packet - ignoring payload
-			return packets
+			return err
 		}
 		isString := startByte == 0x00
 		length, err := bufferTail.ReadBytes(0xFF)
 		if err != nil {
-			return packets
+			return err
 		}
 		_l := len(length)
 		if _l < 1 {
-			return packets
+			return errors.New("invalid data length")
 		}
 		lenByte := length[:_l-1]
 		for k, l := 0, len(lenByte); k < l; k++ {
@@ -359,7 +355,7 @@ func (p *parserv3) decodePayloadAsBinary(bufferTail types.BufferInterface) (pack
 		}
 		packetLen, err := strconv.ParseInt(string(lenByte), 10, 0)
 		if err != nil {
-			return packets
+			return err
 		}
 		PACKETLEN = int(packetLen)
 		if isString {
@@ -373,7 +369,7 @@ func (p *parserv3) decodePayloadAsBinary(bufferTail types.BufferInterface) (pack
 						if err == io.EOF {
 							break
 						}
-						return packets
+						return err
 					}
 					if !utf8.ValidRune(r) {
 						r = 0xFFFD
@@ -383,7 +379,7 @@ func (p *parserv3) decodePayloadAsBinary(bufferTail types.BufferInterface) (pack
 				r, l := utf8.DecodeRune(buf)
 				k += utils.Utf16Len(r)
 				if _, err := data.Write(utils.Utf8decodeBytes(buf[0:l])); err != nil {
-					return packets
+					return err
 				}
 				buf = buf[l:]
 			}
@@ -391,24 +387,15 @@ func (p *parserv3) decodePayloadAsBinary(bufferTail types.BufferInterface) (pack
 				bufferTail.Seek(-int64(cursor), io.SeekCurrent)
 			}
 			if data.Len() > 0 {
-				packet, err := p.DecodePacket(data, false)
-				if err != nil {
-					// parser error in individual packet - ignoring payload
-					return packets
-				}
-				packets = append(packets, packet)
+				packet, _ := p.DecodePacket(data, false)
+				callback(packet)
 			}
 		} else {
 			if data := bufferTail.Next(PACKETLEN); len(data) > 0 {
-				packet, err := p.DecodePacket(types.NewBytesBuffer(data), false)
-				if err != nil {
-					// parser error in individual packet - ignoring payload
-					return packets
-				}
-				packets = append(packets, packet)
+				packet, _ := p.DecodePacket(types.NewBytesBuffer(data), false)
+				callback(packet)
 			}
 		}
 	}
-
-	return packets
+	return nil
 }
