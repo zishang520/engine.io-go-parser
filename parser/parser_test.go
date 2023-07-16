@@ -37,6 +37,21 @@ func TestParserv3(t *testing.T) {
 		}
 	})
 
+	t.Run("EncodePacket/Error", func(t *testing.T) {
+		data, err := p.EncodePacket(&packet.Packet{
+			Type:    packet.ERROR,
+			Data:    strings.NewReader("test测试中文和表情字符❤️🧡💛🧓🏾💟"),
+			Options: nil,
+		}, false, false)
+
+		if err == nil {
+			t.Fatal("EncodePacket error must be not nil")
+		}
+		if data != nil {
+			t.Fatal(`EncodePacket value must be nil`)
+		}
+	})
+
 	t.Run("EncodePacket/Byte", func(t *testing.T) {
 		data, err := p.EncodePacket(&packet.Packet{
 			Type:    packet.OPEN,
