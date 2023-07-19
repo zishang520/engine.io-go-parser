@@ -10,7 +10,7 @@ type Parser interface {
 	EncodePacket(*packet.Packet, bool, ...bool) (types.BufferInterface, error)
 	DecodePacket(types.BufferInterface, ...bool) (*packet.Packet, error)
 	EncodePayload([]*packet.Packet, ...bool) (types.BufferInterface, error)
-	DecodePayload(types.BufferInterface, func(*packet.Packet)) error
+	DecodePayload(types.BufferInterface) ([]*packet.Packet, error)
 }
 
 // Packet types.

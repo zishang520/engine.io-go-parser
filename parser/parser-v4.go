@@ -140,7 +140,7 @@ func (p *parserv4) EncodePayload(packets []*packet.Packet, _ ...bool) (types.Buf
 	return enPayload, nil
 }
 
-func (p *parserv4) DecodePayload(data types.BufferInterface, callback func(*packet.Packet)) error {
+func (p *parserv4) DecodePayload(data types.BufferInterface) (packets []*packet.Packet, _ error) {
 	scanner := bufio.NewScanner(data)
 	scanner.Split(func(data []byte, atEOF bool) (int, []byte, error) {
 		if atEOF && len(data) == 0 {
@@ -155,8 +155,11 @@ func (p *parserv4) DecodePayload(data types.BufferInterface, callback func(*pack
 		return 0, nil, nil
 	})
 	for scanner.Scan() {
-		packet, _ := p.DecodePacket(types.NewStringBuffer(scanner.Bytes()))
-		callback(packet)
+		if packet, err := p.DecodePacket(types.NewStringBuffer(scanner.Bytes())); err == nil {
+			packets = append(packets, packet)
+		} else {
+			return packets, err
+		}
 	}
-	return nil
+	return packets, scanner.Err()
 }
