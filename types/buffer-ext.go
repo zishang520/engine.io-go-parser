@@ -18,10 +18,12 @@ type BufferInterface interface {
 	io.StringWriter
 	WriteRune(rune) (int, error)
 	Bytes() []byte
+	AvailableBuffer() []byte
 	fmt.Stringer
 	Len() int
 	Size() int64
 	Cap() int
+	Available() int
 	Truncate(int)
 	Reset()
 	Grow(int)
