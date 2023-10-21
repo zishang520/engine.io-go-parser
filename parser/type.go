@@ -13,6 +13,8 @@ type Parser interface {
 	DecodePayload(types.BufferInterface) ([]*packet.Packet, error)
 }
 
+const SEPARATOR byte = 0x1E
+
 // Packet types.
 var (
 	PACKET_TYPES map[packet.Type]byte = map[packet.Type]byte{
@@ -38,5 +40,3 @@ var (
 	// Premade error packet.
 	ERROR_PACKET = &packet.Packet{Type: packet.ERROR, Data: types.NewStringBufferString(`parser error`)}
 )
-
-const SEPARATOR = byte(0x1E)
