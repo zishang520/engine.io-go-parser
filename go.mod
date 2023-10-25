@@ -1,3 +1,3 @@
 module github.com/zishang520/engine.io-go-parser
 
-go 1.20
+go 1.21

@@ -10,14 +10,15 @@ type (
 	Type string
 
 	Options struct {
-		Compress bool `json:"compress" mapstructure:"compress" msgpack:"compress"`
+		Compress          bool                  `json:"compress" mapstructure:"compress" msgpack:"compress"`
+		WsPreEncoded      types.BufferInterface `json:"wsPreEncoded,omitempty" mapstructure:"wsPreEncoded,omitempty" msgpack:"wsPreEncoded,omitempty"`
+		WsPreEncodedFrame types.BufferInterface `json:"wsPreEncodedFrame,omitempty" mapstructure:"wsPreEncodedFrame,omitempty" msgpack:"wsPreEncodedFrame,omitempty"`
 	}
 
 	Packet struct {
-		Type         Type                  `json:"type" mapstructure:"type" msgpack:"type"`
-		Data         io.Reader             `json:"data,omitempty" mapstructure:"data,omitempty" msgpack:"data,omitempty"`
-		Options      *Options              `json:"options,omitempty" mapstructure:"options,omitempty" msgpack:"options,omitempty"`
-		WsPreEncoded types.BufferInterface `json:"wsPreEncoded,omitempty" mapstructure:"wsPreEncoded,omitempty" msgpack:"wsPreEncoded,omitempty"`
+		Type    Type      `json:"type" mapstructure:"type" msgpack:"type"`
+		Data    io.Reader `json:"data,omitempty" mapstructure:"data,omitempty" msgpack:"data,omitempty"`
+		Options *Options  `json:"options,omitempty" mapstructure:"options,omitempty" msgpack:"options,omitempty"`
 	}
 )
 
