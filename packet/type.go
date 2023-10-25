@@ -19,6 +19,9 @@ type (
 		Type    Type      `json:"type" mapstructure:"type" msgpack:"type"`
 		Data    io.Reader `json:"data,omitempty" mapstructure:"data,omitempty" msgpack:"data,omitempty"`
 		Options *Options  `json:"options,omitempty" mapstructure:"options,omitempty" msgpack:"options,omitempty"`
+
+		// Deprecated: this method will be removed in the next major release, please use [Options.WsPreEncoded] instead.
+		WsPreEncoded types.BufferInterface
 	}
 )
 
