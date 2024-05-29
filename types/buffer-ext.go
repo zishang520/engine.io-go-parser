@@ -20,6 +20,7 @@ type BufferInterface interface {
 	Bytes() []byte
 	AvailableBuffer() []byte
 	fmt.Stringer
+	fmt.GoStringer
 	Len() int
 	Size() int64
 	Cap() int
@@ -69,6 +70,14 @@ type BytesBuffer struct {
 	*Buffer
 }
 
+func (b *BytesBuffer) GoString() string {
+	if b == nil || b.Buffer == nil {
+		// Special case, useful in debugging.
+		return "<nil>"
+	}
+	return fmt.Sprintf("%v", b.Buffer.Bytes())
+}
+
 func NewBytesBufferReader(r io.Reader) (BufferInterface, error) {
 	b := NewBytesBuffer(nil)
 	_, err := b.ReadFrom(r)
@@ -86,6 +95,14 @@ func NewBytesBufferString(s string) BufferInterface {
 // string buffer
 type StringBuffer struct {
 	*Buffer
+}
+
+func (sb *StringBuffer) GoString() string {
+	if sb == nil || sb.Buffer == nil {
+		// Special case, useful in debugging.
+		return "<nil>"
+	}
+	return sb.Buffer.String()
 }
 
 // MarshalJSON returns sb as the JSON encoding of m.
