@@ -10,17 +10,18 @@ type (
 	Type string
 
 	Options struct {
-		Compress          bool                  `json:"compress" mapstructure:"compress" msgpack:"compress"`
-		WsPreEncoded      types.BufferInterface `json:"wsPreEncoded,omitempty" mapstructure:"wsPreEncoded,omitempty" msgpack:"wsPreEncoded,omitempty"`
-		WsPreEncodedFrame types.BufferInterface `json:"wsPreEncodedFrame,omitempty" mapstructure:"wsPreEncodedFrame,omitempty" msgpack:"wsPreEncodedFrame,omitempty"`
+		Compress bool `json:"compress" msgpack:"compress"`
+		// Deprecated: this method will be removed in the next major release, please use [Options.WsPreEncodedFrame] instead.
+		WsPreEncoded      types.BufferInterface
+		WsPreEncodedFrame types.BufferInterface `json:"wsPreEncodedFrame,omitempty" msgpack:"wsPreEncodedFrame,omitempty"`
 	}
 
 	Packet struct {
-		Type    Type      `json:"type" mapstructure:"type" msgpack:"type"`
-		Data    io.Reader `json:"data,omitempty" mapstructure:"data,omitempty" msgpack:"data,omitempty"`
-		Options *Options  `json:"options,omitempty" mapstructure:"options,omitempty" msgpack:"options,omitempty"`
+		Type    Type      `json:"type" msgpack:"type"`
+		Data    io.Reader `json:"data,omitempty" msgpack:"data,omitempty"`
+		Options *Options  `json:"options,omitempty" msgpack:"options,omitempty"`
 
-		// Deprecated: this method will be removed in the next major release, please use [Options.WsPreEncoded] instead.
+		// Deprecated: this method will be removed in the next major release, please use [Options.WsPreEncodedFrame] instead.
 		WsPreEncoded types.BufferInterface
 	}
 )
