@@ -31,6 +31,26 @@ type BufferInterface interface {
 	Next(int) []byte
 	ReadBytes(byte) ([]byte, error)
 	ReadString(byte) (string, error)
+	Clone() BufferInterface
+}
+
+// Clone creates a deep copy of the Buffer.
+// The returned Buffer has the same content and capacity as the original,
+// but it is an independent copy.
+func (b *Buffer) Clone() *Buffer {
+	if b == nil {
+		return nil
+	}
+
+	clone := &Buffer{
+		buf:      make([]byte, len(b.buf), cap(b.buf)),
+		off:      b.off,
+		lastRead: b.lastRead,
+	}
+
+	copy(clone.buf, b.buf)
+
+	return clone
 }
 
 // Size returns the original length of the underlying byte slice.
@@ -70,6 +90,13 @@ type BytesBuffer struct {
 	*Buffer
 }
 
+func (b *BytesBuffer) Clone() BufferInterface {
+	if b == nil || b.Buffer == nil {
+		return nil
+	}
+	return &BytesBuffer{b.Buffer.Clone()}
+}
+
 func (b *BytesBuffer) GoString() string {
 	if b == nil || b.Buffer == nil {
 		// Special case, useful in debugging.
@@ -95,6 +122,13 @@ func NewBytesBufferString(s string) BufferInterface {
 // string buffer
 type StringBuffer struct {
 	*Buffer
+}
+
+func (sb *StringBuffer) Clone() BufferInterface {
+	if sb == nil || sb.Buffer == nil {
+		return nil
+	}
+	return &StringBuffer{sb.Buffer.Clone()}
 }
 
 func (sb *StringBuffer) GoString() string {

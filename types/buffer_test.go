@@ -728,3 +728,59 @@ func BenchmarkBufferAppendNoCopy(b *testing.B) {
 		bb.Write(b)    // should be nearly infinitely fast
 	}
 }
+
+func TestBufferClone(t *testing.T) {
+	original := &Buffer{
+		buf:      []byte("hello world, hello world"),
+		off:      6,
+		lastRead: 5,
+	}
+
+	clone := original.Clone()
+
+	if clone == original {
+		t.Errorf("Expected different Buffer instances, got the same")
+	}
+
+	if !bytes.Equal(clone.buf, original.buf) {
+		t.Errorf("Expected clone.buf to be %v, got %v", original.buf, clone.buf)
+	}
+
+	if clone.off != original.off {
+		t.Errorf("Expected clone.off to be %d, got %d", original.off, clone.off)
+	}
+	if clone.lastRead != original.lastRead {
+		t.Errorf("Expected clone.lastRead to be %d, got %d", original.lastRead, clone.lastRead)
+	}
+
+	clone.buf[0] = 'H'
+	if original.buf[0] == 'H' {
+		t.Errorf("Modifying clone.buf should not affect original.buf")
+	}
+
+	p := make([]byte, 5)
+	n, err := original.Read(p)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if n != 5 || !bytes.Equal(p, []byte("world")) {
+		t.Fatalf("Read() did not return expected result, got %s", p)
+	}
+
+	if clone.Len() != 18 {
+		t.Errorf("Clone length mismatch, expected 18, got %d", clone.Len())
+	}
+
+	p = make([]byte, clone.Len())
+	n, err = clone.Read(p)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+	if !bytes.Equal(p, []byte("world, hello world")) {
+		t.Errorf("Clone Read() returned incorrect data, got %s", p)
+	}
+
+	if original.Len() != len(", hello world") {
+		t.Errorf("Original buffer length changed after clone, expected %d, got %d", len(", hello world"), original.Len())
+	}
+}
