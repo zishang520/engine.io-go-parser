@@ -148,6 +148,22 @@ func (sb *StringBuffer) MarshalJSON() ([]byte, error) {
 	return json.Marshal(sb.String())
 }
 
+// UnmarshalJSON decodes a JSON-encoded string into the StringBuffer.
+func (sb *StringBuffer) UnmarshalJSON(data []byte) error {
+	if sb == nil {
+		return nil
+	}
+
+	var str string
+	if err := json.Unmarshal(data, &str); err != nil {
+		return err
+	}
+
+	// Clear and populate the buffer with the new string.
+	sb.Buffer = NewBufferString(str)
+	return nil
+}
+
 func NewStringBufferReader(r io.Reader) (BufferInterface, error) {
 	b := NewStringBuffer(nil)
 	_, err := b.ReadFrom(r)
