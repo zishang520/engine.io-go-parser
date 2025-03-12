@@ -13,7 +13,10 @@ type Parser interface {
 	DecodePayload(types.BufferInterface) ([]*packet.Packet, error)
 }
 
-const SEPARATOR byte = 0x1E
+const (
+	SEPARATOR byte = 0x1E
+	Protocol  int  = 4
+)
 
 // Packet types.
 var (

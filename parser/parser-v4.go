@@ -25,7 +25,7 @@ func Parserv4() Parser {
 
 // Current protocol version.
 func (*parserv4) Protocol() int {
-	return 4
+	return Protocol
 }
 
 func (p *parserv4) EncodePacket(data *packet.Packet, supportsBinary bool, _ ...bool) (types.BufferInterface, error) {

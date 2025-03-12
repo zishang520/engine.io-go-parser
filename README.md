@@ -1,7 +1,7 @@
 
 # engine.io-go-parser
 
-[![Build Status](https://github.com/zishang520/engine.io-go-parser/workflows/Go/badge.svg?branch=main)](https://github.com/zishang520/engine.io-go-parser/actions)
+[![Go](https://github.com/zishang520/engine.io-go-parser/actions/workflows/go.yml/badge.svg)](https://github.com/zishang520/engine.io-go-parser/actions/workflows/go.yml)
 [![GoDoc](https://pkg.go.dev/badge/github.com/zishang520/engine.io-go-parser?utm_source=godoc)](https://pkg.go.dev/github.com/zishang520/engine.io-go-parser)
 
 This is the golang parser for the engine.io protocol encoding,
