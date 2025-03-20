@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"bytes"
 	"io"
-	"strings"
 	"unicode/utf8"
 )
 
@@ -29,7 +27,7 @@ func Utf16Count(src []byte) (n int) {
 		rb, l := utf8.DecodeRune(src)
 		src = src[l:]
 		if !utf8.ValidRune(rb) {
-			rb = 0xFFFD
+			rb = utf8.RuneError
 		}
 		n += Utf16Len(rb)
 	}
@@ -40,7 +38,7 @@ func Utf16CountString(src string) (n int) {
 	// range rune
 	for _, rb := range src {
 		if !utf8.ValidRune(rb) {
-			rb = 0xFFFD
+			rb = utf8.RuneError
 		}
 		n += Utf16Len(rb)
 	}
@@ -48,69 +46,65 @@ func Utf16CountString(src string) (n int) {
 }
 
 func Utf8encodeString(src string) string {
-	buf := new(strings.Builder)
-	for i, l := 0, len(src); i < l; i++ {
+	buf := make([]byte, 0, len(src))
+	for i := 0; i < len(src); i++ {
 		rb := rune(src[i])
 		if !utf8.ValidRune(rb) {
-			rb = 0xFFFD
+			rb = utf8.RuneError
 		}
-		buf.WriteRune(rb)
+		buf = utf8.AppendRune(buf, rb)
 	}
-	return buf.String()
+	return string(buf)
 }
 
 func Utf8encodeBytes(src []byte) []byte {
-	buf := bytes.NewBuffer(nil)
-	// range byte
+	buf := make([]byte, 0, len(src))
 	for _, b := range src {
 		rb := rune(b)
 		if !utf8.ValidRune(rb) {
-			rb = 0xFFFD
+			rb = utf8.RuneError
 		}
-		buf.WriteRune(rb)
+		buf = utf8.AppendRune(buf, rb)
 	}
-	return buf.Bytes()
+	return buf
 }
 
 func Utf8decodeString(byteString string) string {
-	buf := new(strings.Builder)
-	// range rune
+	buf := make([]byte, 0, len(byteString))
 	for _, rb := range byteString {
 		if !utf8.ValidRune(rb) {
-			rb = 0xFFFD
+			rb = utf8.RuneError
 		}
-		buf.WriteByte(byte(rb))
+		buf = append(buf, byte(rb))
 	}
-	return buf.String()
+	return string(buf)
 }
 
-func Utf8decodeBytes(src []byte) (dst []byte) {
+func Utf8decodeBytes(src []byte) []byte {
+	buf := make([]byte, 0, len(src))
 	for len(src) > 0 {
 		r, l := utf8.DecodeRune(src)
 		src = src[l:]
 		if !utf8.ValidRune(r) {
-			r = 0xFFFD
+			r = utf8.RuneError
 		}
-		dst = append(dst, byte(r))
+		buf = append(buf, byte(r))
 	}
-	return
+	return buf
 }
 
 // private
 func utf8encodeBytes(dst, src []byte) int {
-	buf := bytes.NewBuffer(nil)
+	ndst := 0
 	for _, b := range src {
 		rb := rune(b)
 		if !utf8.ValidRune(rb) {
-			rb = 0xFFFD
+			rb = utf8.RuneError
 		}
-		buf.WriteRune(rb)
+		n := utf8.EncodeRune(dst[ndst:], rb)
+		ndst += n
 	}
-	l, err := buf.Read(dst)
-	if err != nil {
-		return 0
-	}
-	return l
+	return ndst
 }
 
 func utf8decodeBytes(dst, src []byte) (ndst, nsrc int, err error) {
@@ -118,7 +112,7 @@ func utf8decodeBytes(dst, src []byte) (ndst, nsrc int, err error) {
 		r, l := utf8.DecodeRune(src)
 		src = src[l:]
 		if !utf8.ValidRune(r) {
-			r = 0xFFFD
+			r = utf8.RuneError
 		}
 		dst[ndst] = byte(r)
 		nsrc += l

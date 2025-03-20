@@ -2,7 +2,6 @@ package parser
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -31,7 +30,7 @@ func (*parserv3) Protocol() int {
 
 func (p *parserv3) EncodePacket(data *packet.Packet, supportsBinary bool, utf8encode ...bool) (types.BufferInterface, error) {
 	if data == nil {
-		return nil, errors.New("packet must not be nil")
+		return nil, ErrPacketNil
 	}
 
 	utf8en := false
@@ -48,7 +47,7 @@ func (p *parserv3) EncodePacket(data *packet.Packet, supportsBinary bool, utf8en
 		encode := types.NewStringBuffer(nil)
 		_type, _type_ok := PACKET_TYPES[data.Type]
 		if !_type_ok {
-			return nil, errors.New(`Packet Type error`)
+			return nil, ErrPacketType
 		}
 		// Sending data as a utf-8 string
 		if err := encode.WriteByte(_type); err != nil {
@@ -72,7 +71,7 @@ func (p *parserv3) EncodePacket(data *packet.Packet, supportsBinary bool, utf8en
 			encode := types.NewStringBuffer(nil)
 			_type, _type_ok := PACKET_TYPES[data.Type]
 			if !_type_ok {
-				return nil, errors.New(`Packet Type error`)
+				return nil, ErrPacketType
 			}
 			if _, err := encode.Write([]byte{'b', _type}); err != nil {
 				return nil, err
@@ -88,7 +87,7 @@ func (p *parserv3) EncodePacket(data *packet.Packet, supportsBinary bool, utf8en
 		encode := types.NewBytesBuffer(nil)
 		_type, _type_ok := PACKET_TYPES[data.Type]
 		if !_type_ok {
-			return nil, errors.New(`Packet Type error`)
+			return nil, ErrPacketType
 		}
 		if err := encode.WriteByte(_type - '0'); err != nil {
 			return nil, err
@@ -102,7 +101,7 @@ func (p *parserv3) EncodePacket(data *packet.Packet, supportsBinary bool, utf8en
 	encode := types.NewStringBuffer(nil)
 	_type, _type_ok := PACKET_TYPES[data.Type]
 	if !_type_ok {
-		return nil, errors.New(`Packet Type error`)
+		return nil, ErrPacketType
 	}
 	if err := encode.WriteByte(_type); err != nil {
 		return nil, err
@@ -113,7 +112,7 @@ func (p *parserv3) EncodePacket(data *packet.Packet, supportsBinary bool, utf8en
 // Decodes a packet. Data also available as an ArrayBuffer if requested.
 func (p *parserv3) DecodePacket(data types.BufferInterface, utf8decode ...bool) (*packet.Packet, error) {
 	if data == nil {
-		return ERROR_PACKET, errors.New(`parser error`)
+		return ERROR_PACKET, ErrDataNil
 	}
 
 	utf8de := false
@@ -136,7 +135,7 @@ func (p *parserv3) DecodePacket(data types.BufferInterface, utf8decode ...bool) 
 			}
 			packetType, ok := PACKET_TYPES_REVERSE[msgType]
 			if !ok {
-				return ERROR_PACKET, errors.New(fmt.Sprintf(`Parsing error, unknown data type [%c]`, msgType))
+				return ERROR_PACKET, fmt.Errorf(`%w, unknown data type [%c]`, ErrParser, msgType)
 			}
 			decode := types.NewBytesBuffer(nil)
 			if _, err := decode.ReadFrom(base64.NewDecoder(base64.StdEncoding, v)); err != nil {
@@ -146,7 +145,7 @@ func (p *parserv3) DecodePacket(data types.BufferInterface, utf8decode ...bool) 
 		}
 		packetType, ok := PACKET_TYPES_REVERSE[msgType]
 		if !ok {
-			return ERROR_PACKET, errors.New(fmt.Sprintf(`Parsing error, unknown data type [%c]`, msgType))
+			return ERROR_PACKET, fmt.Errorf(`%w, unknown data type [%c]`, ErrParser, msgType)
 		}
 		decode := types.NewStringBuffer(nil)
 		if utf8de {
@@ -164,7 +163,7 @@ func (p *parserv3) DecodePacket(data types.BufferInterface, utf8decode ...bool) 
 	// Default case
 	packetType, ok := PACKET_TYPES_REVERSE[msgType+'0']
 	if !ok {
-		return ERROR_PACKET, errors.New(fmt.Sprintf(`Parsing error, unknown data type [%c]`, msgType+'0'))
+		return ERROR_PACKET, fmt.Errorf(`%w, unknown data type [%c]`, ErrParser, msgType+'0')
 	}
 	decode := types.NewBytesBuffer(nil)
 	if _, err := io.Copy(decode, data); err != nil {
@@ -236,7 +235,7 @@ func (p *parserv3) EncodePayload(packets []*packet.Packet, supportsBinary ...boo
 
 func (p *parserv3) encodeOneBinaryPacket(packet *packet.Packet) (types.BufferInterface, error) {
 	if packet == nil {
-		return nil, errors.New("packet must not be nil")
+		return nil, ErrPacketNil
 	}
 	binarypacket := types.NewBytesBuffer(nil)
 
@@ -325,7 +324,7 @@ func (p *parserv3) DecodePayload(data types.BufferInterface) (packets []*packet.
 			}
 			_l := len(length)
 			if _l < 1 {
-				return packets, errors.New("invalid data length")
+				return packets, ErrInvalidDataLength
 			}
 			packetLen, err := strconv.ParseInt(length[:_l-1], 10, 0)
 			if err != nil {
@@ -376,7 +375,7 @@ func (p *parserv3) decodePayloadAsBinary(bufferTail types.BufferInterface) (pack
 		}
 		_l := len(length)
 		if _l < 1 {
-			return packets, errors.New("invalid data length")
+			return packets, ErrInvalidDataLength
 		}
 		lenByte := length[:_l-1]
 		for k, l := 0, len(lenByte); k < l; k++ {

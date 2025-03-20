@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"errors"
+
 	"github.com/zishang520/engine.io-go-parser/packet"
 	"github.com/zishang520/engine.io-go-parser/types"
 )
@@ -42,4 +44,10 @@ var (
 
 	// Premade error packet.
 	ERROR_PACKET = &packet.Packet{Type: packet.ERROR, Data: types.NewStringBufferString(`parser error`)}
+
+	ErrPacketNil         = errors.New("Packet must not be nil")
+	ErrPacketType        = errors.New("Invalid packet type")
+	ErrDataNil           = errors.New("Data must not be nil")
+	ErrInvalidDataLength = errors.New("Invalid data length")
+	ErrParser            = errors.New("Parsing error")
 )

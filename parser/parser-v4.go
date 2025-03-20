@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -30,7 +29,7 @@ func (*parserv4) Protocol() int {
 
 func (p *parserv4) EncodePacket(data *packet.Packet, supportsBinary bool, _ ...bool) (types.BufferInterface, error) {
 	if data == nil {
-		return nil, errors.New(`Packet is nil`)
+		return nil, ErrPacketNil
 	}
 
 	if c, ok := data.Data.(io.Closer); ok {
@@ -39,7 +38,7 @@ func (p *parserv4) EncodePacket(data *packet.Packet, supportsBinary bool, _ ...b
 
 	_type, _type_ok := PACKET_TYPES[data.Type]
 	if !_type_ok {
-		return nil, errors.New(`Packet Type error`)
+		return nil, ErrPacketType
 	}
 
 	switch v := data.Data.(type) {
@@ -83,7 +82,7 @@ func (p *parserv4) EncodePacket(data *packet.Packet, supportsBinary bool, _ ...b
 
 func (p *parserv4) DecodePacket(data types.BufferInterface, _ ...bool) (*packet.Packet, error) {
 	if data == nil {
-		return ERROR_PACKET, errors.New(`parser error`)
+		return ERROR_PACKET, ErrDataNil
 	}
 
 	// strings
@@ -102,7 +101,7 @@ func (p *parserv4) DecodePacket(data types.BufferInterface, _ ...bool) (*packet.
 		}
 		packetType, ok := PACKET_TYPES_REVERSE[msgType]
 		if !ok {
-			return ERROR_PACKET, errors.New(fmt.Sprintf(`Parsing error, unknown data type [%c]`, msgType))
+			return ERROR_PACKET, fmt.Errorf(`%w, unknown data type [%c]`, ErrParser, msgType)
 		}
 		stringBuffer := types.NewStringBuffer(nil)
 		if _, err := stringBuffer.ReadFrom(v); err != nil {
